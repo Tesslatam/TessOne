@@ -1,2 +1,0 @@
-# TessOne
-Sistema Saas
