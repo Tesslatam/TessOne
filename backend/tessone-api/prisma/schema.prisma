@@ -1,0 +1,281 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Role {
+  id   Int    @id
+  name String @unique
+
+  users           User[]
+  rolePermissions RolePermission[]
+}
+
+model User {
+  id       Int    @id @default(autoincrement())
+  name     String
+  email    String @unique
+  password String
+
+  companyId Int
+  company   Company @relation(fields: [companyId], references: [id])
+
+  roleId Int
+  role   Role @relation(fields: [roleId], references: [id])
+
+  employee Employee?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Company {
+  id        Int      @id @default(autoincrement())
+  name      String
+  ruc       String   @unique
+  email     String
+  createdAt DateTime @default(now())
+
+  users     User[]
+  employees Employee[]
+  clients   Client[]
+  providers Provider[]
+  products  Product[]
+  taxConfig TaxConfig?
+  taxRules  TaxRule[]
+  invoices  Invoice[]
+}
+
+model Permission {
+  id   Int    @id @default(autoincrement())
+  code String @unique
+  name String
+
+  rolePermissions     RolePermission[]
+  employeePermissions EmployeePermission[]
+}
+
+model RolePermission {
+  id Int @id @default(autoincrement())
+
+  roleId Int
+  role   Role @relation(fields: [roleId], references: [id])
+
+  permissionId Int
+  permission   Permission @relation(fields: [permissionId], references: [id])
+}
+
+model Area {
+  id             Int    @id @default(autoincrement())
+  name           String
+  hierarchyOrder Int    @default(0)
+
+  parentId Int?
+  parent   Area?  @relation("AreaHierarchy", fields: [parentId], references: [id])
+  children Area[] @relation("AreaHierarchy")
+
+  employees        Employee[] @relation("EmployeeArea")
+  subAreaEmployees Employee[] @relation("EmployeeSubArea")
+}
+
+model Position {
+  id        Int        @id @default(autoincrement())
+  name      String
+  employees Employee[]
+}
+
+model EmployeePermission {
+  id Int @id @default(autoincrement())
+
+  employeeId Int
+  employee   Employee @relation(fields: [employeeId], references: [id])
+
+  permissionId Int
+  permission   Permission @relation(fields: [permissionId], references: [id])
+}
+
+model Employee {
+  id    Int     @id @default(autoincrement())
+  code  String  @unique
+  name  String
+  email String?
+  phone String?
+
+  companyId Int
+  company   Company @relation(fields: [companyId], references: [id])
+
+  userId Int?  @unique
+  user   User? @relation(fields: [userId], references: [id])
+
+  areaId Int
+  area   Area @relation("EmployeeArea", fields: [areaId], references: [id])
+
+  subAreaId Int?
+  subArea   Area? @relation("EmployeeSubArea", fields: [subAreaId], references: [id])
+
+  positionId Int
+  position   Position @relation(fields: [positionId], references: [id])
+
+  managerId    Int?
+  manager      Employee?  @relation("EmployeeHierarchy", fields: [managerId], references: [id])
+  subordinates Employee[] @relation("EmployeeHierarchy")
+
+  isAreaManager Boolean @default(false)
+
+  employeePermissions EmployeePermission[]
+  invoices            Invoice[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model PersonType {
+  id   Int    @id
+  name String
+
+  clients Client[]
+}
+
+model Client {
+  id             Int    @id @default(autoincrement())
+  code           String @unique
+  name           String
+  identification String
+
+  personTypeId Int
+  personType   PersonType @relation(fields: [personTypeId], references: [id])
+
+  passport String?
+  email    String?
+
+  companyId Int
+  company   Company @relation(fields: [companyId], references: [id])
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  invoices  Invoice[]
+}
+
+model Provider {
+  id   Int    @id @default(autoincrement())
+  code String @unique // cod_proveedor
+
+  name  String
+  ruc   String  @unique
+  email String
+  phone String?
+
+  companyId Int
+  company   Company @relation(fields: [companyId], references: [id])
+
+  products Product[]
+
+  createdAt DateTime @default(now())
+}
+
+model Product {
+  id          Int     @id @default(autoincrement())
+  name        String
+  description String?
+  price       Float
+  stock       Int     @default(0)
+
+  companyId Int
+  company   Company @relation(fields: [companyId], references: [id])
+
+  providerId Int
+  provider   Provider @relation(fields: [providerId], references: [id])
+
+  createdAt      DateTime        @default(now())
+  invoiceDetails InvoiceDetail[]
+}
+
+model TaxConfig {
+  id        Int     @id @default(autoincrement())
+  companyId Int     @unique
+  company   Company @relation(fields: [companyId], references: [id])
+
+  defaultVatRate Float   @default(15)
+  isActive       Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model TaxRule {
+  id Int @id @default(autoincrement())
+
+  companyId Int
+  company   Company @relation(fields: [companyId], references: [id])
+
+  name        String
+  vatRate     Float
+  startDate   DateTime
+  endDate     DateTime
+  isActive    Boolean  @default(true)
+  description String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Invoice {
+  id   Int    @id @default(autoincrement())
+  code String @unique
+
+  companyId Int
+  company   Company @relation(fields: [companyId], references: [id])
+
+  clientId Int
+  client   Client @relation(fields: [clientId], references: [id])
+
+  employeeId Int
+  employee   Employee @relation(fields: [employeeId], references: [id])
+
+  subtotal  Float
+  vatRate   Float
+  vatAmount Float
+  total     Float
+
+  statusId Int
+  status   InvoiceStatus @relation(fields: [statusId], references: [id])
+
+  cancelReason String?
+  cancelledAt  DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  details InvoiceDetail[]
+}
+
+model InvoiceDetail {
+  id Int @id @default(autoincrement())
+
+  invoiceId Int
+  invoice   Invoice @relation(fields: [invoiceId], references: [id])
+
+  productId Int
+  product   Product @relation(fields: [productId], references: [id])
+
+  quantity  Int
+  unitPrice Float
+  subtotal  Float
+
+  createdAt DateTime @default(now())
+}
+
+model InvoiceStatus {
+  id       Int       @id
+  name     String    @unique
+  invoices Invoice[]
+}
