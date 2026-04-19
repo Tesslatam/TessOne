@@ -1,8 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -18,6 +13,8 @@ model Role {
 
   users           User[]
   rolePermissions RolePermission[]
+
+  @@map("dw_role")
 }
 
 model User {
@@ -36,6 +33,8 @@ model User {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@map("dw_user")
 }
 
 model Company {
@@ -53,6 +52,8 @@ model Company {
   taxConfig TaxConfig?
   taxRules  TaxRule[]
   invoices  Invoice[]
+
+  @@map("dw_company")
 }
 
 model Permission {
@@ -62,6 +63,8 @@ model Permission {
 
   rolePermissions     RolePermission[]
   employeePermissions EmployeePermission[]
+
+  @@map("dw_permission")
 }
 
 model RolePermission {
@@ -72,6 +75,8 @@ model RolePermission {
 
   permissionId Int
   permission   Permission @relation(fields: [permissionId], references: [id])
+
+  @@map("dw_role_permission")
 }
 
 model Area {
@@ -85,12 +90,16 @@ model Area {
 
   employees        Employee[] @relation("EmployeeArea")
   subAreaEmployees Employee[] @relation("EmployeeSubArea")
+
+  @@map("dw_area")
 }
 
 model Position {
   id        Int        @id @default(autoincrement())
   name      String
   employees Employee[]
+
+  @@map("dw_position")
 }
 
 model EmployeePermission {
@@ -101,6 +110,8 @@ model EmployeePermission {
 
   permissionId Int
   permission   Permission @relation(fields: [permissionId], references: [id])
+
+  @@map("dw_employee_permission")
 }
 
 model Employee {
@@ -136,6 +147,8 @@ model Employee {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@map("dw_employee")
 }
 
 model PersonType {
@@ -143,6 +156,8 @@ model PersonType {
   name String
 
   clients Client[]
+
+  @@map("dw_person_type")
 }
 
 model Client {
@@ -163,11 +178,13 @@ model Client {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   invoices  Invoice[]
+
+  @@map("dw_client")
 }
 
 model Provider {
   id   Int    @id @default(autoincrement())
-  code String @unique // cod_proveedor
+  code String @unique
 
   name  String
   ruc   String  @unique
@@ -180,6 +197,8 @@ model Provider {
   products Product[]
 
   createdAt DateTime @default(now())
+
+  @@map("dw_provider")
 }
 
 model Product {
@@ -197,6 +216,8 @@ model Product {
 
   createdAt      DateTime        @default(now())
   invoiceDetails InvoiceDetail[]
+
+  @@map("dw_product")
 }
 
 model TaxConfig {
@@ -209,6 +230,8 @@ model TaxConfig {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@map("dw_tax_config")
 }
 
 model TaxRule {
@@ -226,6 +249,8 @@ model TaxRule {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@map("dw_tax_rule")
 }
 
 model Invoice {
@@ -256,6 +281,8 @@ model Invoice {
   updatedAt DateTime @updatedAt
 
   details InvoiceDetail[]
+
+  @@map("dw_invoice")
 }
 
 model InvoiceDetail {
@@ -272,10 +299,14 @@ model InvoiceDetail {
   subtotal  Float
 
   createdAt DateTime @default(now())
+
+  @@map("dw_invoice_detail")
 }
 
 model InvoiceStatus {
   id       Int       @id
   name     String    @unique
   invoices Invoice[]
+
+  @@map("dw_invoice_status")
 }
